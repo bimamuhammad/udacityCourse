@@ -39,16 +39,26 @@ public class ReservationService {
     }
 
     public static void printAllReservation(){
-        for(Reservation reservation: reservations ){
-            System.out.println(reservation);
+        if(reservations.isEmpty()){
+            System.out.println("There are no reservations at this time");
+        }else {
+            for (Reservation reservation : reservations) {
+                System.out.println("----------------------------------------");
+                System.out.println(reservation);
+            }
         }
     }
     public static Collection<Reservation> getAllReservation(){return reservations;}
     public static Collection<IRoom> getAllRooms(){return rooms;}
 
     public static void printAllRooms(){
-        for(IRoom room: rooms ){
-            System.out.println(room);
+        if(rooms.isEmpty()){
+            System.out.println("There are no rooms at this time");
+        } else {
+            for (IRoom room : rooms) {
+                System.out.println("----------------------------------------");
+                System.out.println(room);
+            }
         }
     }
 }

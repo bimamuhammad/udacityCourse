@@ -94,19 +94,17 @@ public class MainMenu {
             return this.yesOrNo(caption);
         }
     }
+    private final Pattern roomNumberRegex = Pattern.compile("^[0-9]*$");
     private void findAndReserveARoom(){
         SimpleDateFormat outputFormat = new SimpleDateFormat("E MMM dd yyyy");
-        Date checkInDate = this.inputDate("Enter CheckInDate mm/dd/yyyy example 02/01/2020");
+        Date checkInDate = this.inputDate("Enter Check In Date mm/dd/yyyy example 02/01/2020");
 
-        Date checkOutDate = this.inputDate("Enter CheckInDate mm/dd/yyyy example 02/01/2020");
+        Date checkOutDate = this.inputDate("Enter Check out Date mm/dd/yyyy example 02/01/2020");
 
         System.out.println("Available rooms");
-        boolean noRoomAvailable = true;
         Collection<IRoom> availableRooms = HotelResource.findARoom(checkInDate, checkOutDate);
-        for(IRoom room: availableRooms){
-            System.out.println(room);
-            noRoomAvailable = false;
-        }
+        boolean noRoomAvailable = availableRooms.isEmpty();
+
         if(noRoomAvailable){
             // Room exists but unavaileble,
             // Check for available rooms 7 days out from intended date
@@ -125,6 +123,10 @@ public class MainMenu {
                 System.out.println("Room: "+ freeRoom7days.getRoomNumber());
             }
             this.manageMainMenu();
+        }else{
+            for(IRoom room: availableRooms){
+                System.out.println(room);
+            }
         }
 
         if(this.yesOrNo("Would you like to book a room? y/n")){
@@ -135,6 +137,10 @@ public class MainMenu {
                 if(customer != null){
                     System.out.println("Which room number would you like to reserve?");
                     String roomNumber = this.input.nextLine();
+                    while(!roomNumberRegex.matcher(roomNumber).matches()){
+                        System.out.println("You have to enter a numerical value for room number");
+                        roomNumber = this.input.nextLine();
+                    }
                     Collection<IRoom> freeRooms = HotelResource.findARoom(checkInDate, checkOutDate);
                     boolean roomUnavailable = true;
                     boolean suggestionAvailabe = false;
@@ -180,25 +186,51 @@ public class MainMenu {
             this.manageMainMenu();
         }
     }
+
+    final private String emailRegex="^(\\S+)@(.+).(.+)$";
+    final Pattern emailPattern =  Pattern.compile(emailRegex);
     private void seeAllReservations() {
         SimpleDateFormat outputFormat = new SimpleDateFormat("E MMM dd yyyy");
         System.out.println("Enter your email address");
         String emailAddress = this.input.nextLine();
+        while(!emailPattern.matcher(emailAddress).matches()){
+            System.out.println("Enter valid email address name@domain.com");
+            emailAddress = this.input.nextLine();
+        }
         Collection<Reservation> reservations = HotelResource.getCustomersReservations(emailAddress);
-        for(Reservation reservation: reservations){
-            System.out.println(outputFormat.format(reservation.getCheckInDate()) +" to "+
-                    outputFormat.format(reservation.getCheckOutDate()));
+        if(reservations.isEmpty()){
+            System.out.println("You have no reservations at this time");
+        } else {
+            for (Reservation reservation : reservations) {
+                System.out.println("----------------------------------------");
+                System.out.println(outputFormat.format(reservation.getCheckInDate()) + " to " +
+                        outputFormat.format(reservation.getCheckOutDate()));
+            }
         }
         this.manageMainMenu();
     }
+
+    final Pattern namePattern = Pattern.compile("^\\S*$");
     private void createAnAccount(){
         System.out.println("Create an account");
         System.out.println("Enter email format: name@domain.com");
         String email = this.input.nextLine();
+        while(!emailPattern.matcher(email).matches()){
+            System.out.println("Enter valid email address");
+            email = this.input.nextLine();
+        }
         System.out.println("Enter FirstName");
         String firstName = this.input.nextLine();
+        while(!namePattern.matcher(firstName).matches()){
+            System.out.println("Enter valid name. NO Spaces");
+            firstName = this.input.nextLine();
+        }
         System.out.println("Enter LastName");
         String lastName = this.input.nextLine();
+        while(!namePattern.matcher(lastName).matches()){
+            System.out.println("Enter valid name. No Spaces");
+            lastName = this.input.nextLine();
+        }
         try {
             HotelResource.createACustomer(email, firstName, lastName);
             this.manageMainMenu();
@@ -213,7 +245,7 @@ public class MainMenu {
         adminMenu.manageAdminMenu();
     }
     private void exit(){
-        System.out.println("Exitting");
+        System.out.println("Exiting");
     }
 
 }

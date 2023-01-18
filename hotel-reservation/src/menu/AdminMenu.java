@@ -1,14 +1,12 @@
 package menu;
 
 import api.AdminResource;
+import model.Customer;
 import model.FreeRoom;
 import model.IRoom;
 import model.RoomType;
-import service.CustomerService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class AdminMenu {
@@ -47,10 +45,15 @@ public class AdminMenu {
         this.mainMenu.manageMainMenu();
     }
     private final Pattern roomTypeRegex = Pattern.compile("^[1-2]$");
+    private final Pattern roomNumberRegex = Pattern.compile("^[0-9]*$");
     private void addARoom() {
         try {
             System.out.println("Enter room number");
             String roomId = this.input.nextLine();
+            while (!roomNumberRegex.matcher(roomId).matches()) {
+                System.out.println("Room number must be numerical");
+                roomId = this.input.nextLine();
+            }
 
             System.out.println("Enter price per night");
             Double roomPrice = this.input.nextDouble();
@@ -87,7 +90,7 @@ public class AdminMenu {
                 }
             }
         }catch (Exception ex){
-            System.out.println("Enter Valid values");
+            System.out.println("Enter Valid values. Prices must be numerical");
             this.input.nextLine();
             this.addARoom();
         }
@@ -106,7 +109,15 @@ public class AdminMenu {
     }
 
     private void seeAllCustomers() {
-        CustomerService.printAllCustomers();
+        Collection<Customer> customers = AdminResource.getAllCustomers();
+        if(customers.isEmpty()){
+            System.out.println("There are not registered customers at the time");
+        } else {
+            for (Customer customer : customers) {
+                System.out.println("----------------------------------------");
+                System.out.println(customer);
+            }
+        }
         this.manageAdminMenu();
     }
 

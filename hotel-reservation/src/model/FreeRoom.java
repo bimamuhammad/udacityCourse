@@ -7,6 +7,6 @@ public class FreeRoom extends Room{
 
     @Override
     public String toString(){
-        return "Room "+this.roomNumber+" is a "+this.enumeration+" and costs "+this.price;
+        return "Room "+this.roomNumber+" is a "+this.enumeration+" and costs $"+this.price;
     }
 }
