@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
 
 public class MainMenu {
 
+    static HotelResource hotelResource = HotelResource.getInstance();
+
     Scanner input;
     private final Pattern regexInput = Pattern.compile("^[1-5]$");
 
@@ -100,29 +102,23 @@ public class MainMenu {
         Date checkInDate = this.inputDate("Enter Check In Date mm/dd/yyyy example 02/01/2020");
 
         Date checkOutDate = this.inputDate("Enter Check out Date mm/dd/yyyy example 02/01/2020");
-
+        if(checkInDate.compareTo(checkOutDate) >= 0 || checkInDate.compareTo(Calendar.getInstance().getTime())<0){
+            System.out.println("Invalid date range. \n Please try again");
+            this.findAndReserveARoom();
+        }
         System.out.println("Available rooms");
-        Collection<IRoom> availableRooms = HotelResource.findARoom(checkInDate, checkOutDate);
+        Collection<IRoom> availableRooms = hotelResource.findARoom(checkInDate, checkOutDate);
         boolean noRoomAvailable = availableRooms.isEmpty();
 
         if(noRoomAvailable){
             // Room exists but unavaileble,
             // Check for available rooms 7 days out from intended date
-            Calendar c = Calendar.getInstance();
-            c.setTime(checkInDate);
-            c.add(Calendar.DATE, 7);
-            Date newCheckInDate = c.getTime();
-            c.setTime(checkOutDate);
-            c.add(Calendar.DATE, 7);
-            Date newCheckoutDate = c.getTime();
-            Collection<IRoom> freeRooms7days = HotelResource.findARoom(newCheckInDate, newCheckoutDate);
-            System.out.println("No room available within the specified date.\n" +
-                    "The following are available on "+outputFormat.format(newCheckInDate)+" to " +
-                    outputFormat.format(newCheckoutDate));
-            for(IRoom freeRoom7days: freeRooms7days){
-                System.out.println("Room: "+ freeRoom7days.getRoomNumber());
+            hotelResource.recommendAltRoom(checkInDate, checkOutDate);
+            if(yesOrNo("Would you like to book one of these rooms?")){
+                this.findAndReserveARoom();
+            }else {
+                this.manageMainMenu();
             }
-            this.manageMainMenu();
         }else{
             for(IRoom room: availableRooms){
                 System.out.println(room);
@@ -133,7 +129,7 @@ public class MainMenu {
             if(this.yesOrNo("Do you have an account with us? y/n")){
                 System.out.println("Enter your email format name@domain.com");
                 String email = this.input.nextLine();
-                Customer customer = HotelResource.getCustomer(email);
+                Customer customer = hotelResource.getCustomer(email);
                 if(customer != null){
                     System.out.println("Which room number would you like to reserve?");
                     String roomNumber = this.input.nextLine();
@@ -141,10 +137,9 @@ public class MainMenu {
                         System.out.println("You have to enter a numerical value for room number");
                         roomNumber = this.input.nextLine();
                     }
-                    Collection<IRoom> freeRooms = HotelResource.findARoom(checkInDate, checkOutDate);
                     boolean roomUnavailable = true;
                     boolean suggestionAvailabe = false;
-                    for(IRoom freeRoom: freeRooms){
+                    for(IRoom freeRoom: availableRooms){
                         if(freeRoom.getRoomNumber().equals(roomNumber)){
                             roomUnavailable = false;
                             break;
@@ -152,12 +147,12 @@ public class MainMenu {
                             suggestionAvailabe = true;
                         }
                     }
-                    IRoom room = HotelResource.getRoom(roomNumber);
+                    IRoom room = hotelResource.getRoom(roomNumber);
                     // this will help check out two things.
                     // 1) if room is already booked, then it is unavailable
                     // 2) if room is not even available because it does nto exist
                     if(room != null && !roomUnavailable) {
-                        HotelResource.bookARoom(email, room, checkInDate, checkOutDate);
+                        hotelResource.bookARoom(email, room, checkInDate, checkOutDate);
                         System.out.print("Reservation\n" +
                                 customer.firstName + " " + customer.lastName + "\n" +
                                 "Room: " + roomNumber + " - " + room.getRoomType() + "\n" +
@@ -166,8 +161,8 @@ public class MainMenu {
                                 "Checkout Date: " + outputFormat.format(checkOutDate)+"\n");
                         this.manageMainMenu();
                     } else if (room != null && suggestionAvailabe) {
-                        System.out.println("Room you selected is unavailable. \n However, the following rooms are available\n");
-                        for(IRoom freeRoom: freeRooms){
+                        System.out.println("Room you selected is unavailable for the indicted dates. \n However, the following rooms are available\n");
+                        for(IRoom freeRoom: availableRooms){
                             System.out.println("Room: "+ freeRoom.getRoomNumber());
                         }
                         this.manageMainMenu();
@@ -197,7 +192,7 @@ public class MainMenu {
             System.out.println("Enter valid email address name@domain.com");
             emailAddress = this.input.nextLine();
         }
-        Collection<Reservation> reservations = HotelResource.getCustomersReservations(emailAddress);
+        Collection<Reservation> reservations = hotelResource.getCustomersReservations(emailAddress);
         if(reservations.isEmpty()){
             System.out.println("You have no reservations at this time");
         } else {
@@ -232,7 +227,7 @@ public class MainMenu {
             lastName = this.input.nextLine();
         }
         try {
-            HotelResource.createACustomer(email, firstName, lastName);
+            hotelResource.createACustomer(email, firstName, lastName);
             this.manageMainMenu();
         }catch(IllegalArgumentException illegalArgumentException){
             System.out.println("Invalid email address. Restarting");
@@ -246,6 +241,7 @@ public class MainMenu {
     }
     private void exit(){
         System.out.println("Exiting");
+        System.exit(0);
     }
 
 }

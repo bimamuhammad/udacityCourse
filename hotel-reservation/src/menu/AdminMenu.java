@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 
 public class AdminMenu {
 
+    static AdminResource adminResource = AdminResource.getInstance();
+
     Scanner input;
     MainMenu mainMenu;
     public AdminMenu(Scanner input, MainMenu mainMenu){
@@ -74,7 +76,7 @@ public class AdminMenu {
 
             List<IRoom> room = new ArrayList<IRoom>();
             room.add(new FreeRoom(roomId, roomPrice, roomType));
-            AdminResource.addRoom(room);
+            adminResource.addRoom(room);
             Boolean waiting = true;
             System.out.println("Would you like to add another room y/n");
             while(waiting){
@@ -99,17 +101,17 @@ public class AdminMenu {
     }
 
     private void seeAllReservations() {
-        AdminResource.displayAllReservations();
+        adminResource.displayAllReservations();
         this.manageAdminMenu();
     }
 
     private void seeAllRooms() {
-        AdminResource.displayAllRooms();
+        adminResource.displayAllRooms();
         this.manageAdminMenu();
     }
 
     private void seeAllCustomers() {
-        Collection<Customer> customers = AdminResource.getAllCustomers();
+        Collection<Customer> customers = adminResource.getAllCustomers();
         if(customers.isEmpty()){
             System.out.println("There are not registered customers at the time");
         } else {

@@ -3,17 +3,26 @@ package service;
 import model.Customer;
 import model.IRoom;
 import model.Reservation;
+import model.Room;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ReservationService {
-    private static Set<IRoom> rooms = new HashSet<IRoom>();
-    static List<Reservation> reservations = new ArrayList<Reservation>();
-    public static void addRoom(IRoom room){
+    private Set<IRoom> rooms = new HashSet<>();
+    static List<Reservation> reservations = new ArrayList<>();
+    private static ReservationService single_instance = null;
+    public static ReservationService getInstance(){
+        if(single_instance == null){
+            single_instance = new ReservationService();
+        }
+        return single_instance;
+    }
+    public void addRoom(IRoom room){
         rooms.add(room);
     }
 
-    public static IRoom getARoom(String roomId){
+    public IRoom getARoom(String roomId){
         for(IRoom room: rooms){
             if(Objects.equals(room.getRoomNumber(), roomId)){
                 return room;
@@ -22,14 +31,14 @@ public class ReservationService {
         return null;
     }
 
-    public static Reservation reserveARoom(Customer customer, IRoom room, Date checkInDate, Date checkoutDate){
+    public Reservation reserveARoom(Customer customer, IRoom room, Date checkInDate, Date checkoutDate){
         Reservation reservation = new Reservation(customer, room, checkInDate, checkoutDate);
         reservations.add(reservation);
         return reservation;
     }
 
-    public static Collection<Reservation> getCustomersReservation(Customer customer){
-        List<Reservation> customerReservations = new ArrayList<Reservation>();
+    public Collection<Reservation> getCustomersReservation(Customer customer){
+        List<Reservation> customerReservations = new ArrayList<>();
         for(Reservation reservation: reservations){
             if(reservation.getCustomer().equals(customer)){
                 customerReservations.add( reservation);
@@ -38,7 +47,7 @@ public class ReservationService {
         return customerReservations;
     }
 
-    public static void printAllReservation(){
+    public void printAllReservation(){
         if(reservations.isEmpty()){
             System.out.println("There are no reservations at this time");
         }else {
@@ -48,10 +57,10 @@ public class ReservationService {
             }
         }
     }
-    public static Collection<Reservation> getAllReservation(){return reservations;}
-    public static Collection<IRoom> getAllRooms(){return rooms;}
+    public Collection<Reservation> getAllReservation(){return reservations;}
+    public Collection<IRoom> getAllRooms(){return rooms;}
 
-    public static void printAllRooms(){
+    public void printAllRooms(){
         if(rooms.isEmpty()){
             System.out.println("There are no rooms at this time");
         } else {
@@ -60,5 +69,47 @@ public class ReservationService {
                 System.out.println(room);
             }
         }
+    }
+    public Collection<IRoom> findARoom(Date checkIn, Date checkout){
+        List<IRoom> freeRooms = new ArrayList<>();
+
+        // Use the reservation to populate isFree in rooms
+        for(Reservation ind: reservations ){
+            Room bookedRoom = (Room) ind.getRoom();
+            bookedRoom.setIsFree(checkout.compareTo(ind.getCheckInDate()) < 0 || ind.getCheckOutDate().compareTo(checkIn) < 0);
+            for(IRoom room: rooms){
+                if(room.getRoomNumber().equals(bookedRoom.getRoomNumber())){
+                    rooms.remove(room);
+                    rooms.add(bookedRoom);
+                    break;
+                }
+            }
+        }
+        for(IRoom individualRoom: rooms){
+            if(individualRoom.isFree()){
+                freeRooms.add(individualRoom);
+            }
+        }
+
+        return freeRooms;
+    }
+
+    SimpleDateFormat outputFormat = new SimpleDateFormat("E MMM dd yyyy");
+    public void recommendAltRoom(Date checkIn, Date checkout){
+        Calendar c = Calendar.getInstance();
+        c.setTime(checkIn);
+        c.add(Calendar.DATE, 7);
+        Date newCheckInDate = c.getTime();
+        c.setTime(checkout);
+        c.add(Calendar.DATE, 7);
+        Date newCheckoutDate = c.getTime();
+        System.out.println("No room available within the specified date.\n" +
+                "The following are available on "+outputFormat.format(newCheckInDate)+" to " +
+                outputFormat.format(newCheckoutDate));
+        Collection<IRoom> recommendedRooms =  findARoom(newCheckInDate, newCheckoutDate);
+        for(IRoom recommendedRoom: recommendedRooms){
+            System.out.println("Room: "+ recommendedRoom.getRoomNumber());
+        }
+
     }
 }

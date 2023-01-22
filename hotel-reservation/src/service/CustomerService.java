@@ -8,11 +8,21 @@ import java.util.List;
 
 public class CustomerService {
     static List<Customer> customers = new ArrayList<Customer>();
-    public static void addCustomer(String email, String firstName, String lastName){
+
+    private static CustomerService single_instance = null;
+    private CustomerService(){}
+
+    public static CustomerService getInstance(){
+        if(single_instance == null){
+            single_instance = new CustomerService();
+        }
+        return single_instance;
+    }
+    public void addCustomer(String email, String firstName, String lastName){
         customers.add(new Customer(firstName, lastName, email));
     }
 
-    public static Customer getCustomer(String customerEmail){
+    public Customer getCustomer(String customerEmail){
         for(Customer customer: customers){
             if(customer.email.equals(customerEmail)){
                 return customer;
@@ -21,10 +31,10 @@ public class CustomerService {
         return null;
     }
 
-    public static Collection<Customer> getAllCustomers(){
+    public Collection<Customer> getAllCustomers(){
         return customers;
     }
-    public static void printAllCustomers(){
+    public void printAllCustomers(){
         for(Customer customer: customers ){
             System.out.println(customer);
         }
